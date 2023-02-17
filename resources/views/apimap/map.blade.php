@@ -3,12 +3,12 @@
         <title>Simple Map</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        {{-- bootstrap 4 --}}
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
         <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.3/dist/jquery.slim.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-
-        <!-- alertifyjs -->
+        {{-- alertifyjs --}}
         <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
@@ -33,61 +33,106 @@
             <v-app>
                 <v-main>
                     <v-container>
-                        <div class="input-group mt-3 mb-3">
-                            <input type="text" class="form-control" placeholder="Search">
-                            <div class="input-group-append">
-                            <button class="btn btn-success" type="button">Search</button>
+                        <v-card elevation="2" class="p-2">
+                            <div class="input-group mt-3 mb-3">
+                                <input type="text" class="form-control" placeholder="ค้นหาร้านอาหาร" v-model="keyword">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="button" v-on:click="searchShop">Search</button>
+                                </div>
                             </div>
-                        </div>
-
-                        <div class="text-ceenter">
-                            <div id="map"></div>
-                        </div>
+                            <div class="text-ceenter">
+                                <div id="map"></div>
+                            </div>
+                        </v-card>
                     </v-container>
                 </v-main>
             </v-app>
         </div>
 
-        <!-- vuetify -->
+        {{-- vuetify --}}
         <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
-
+        {{--  longdomap --}}
+        {{-- Documentation => https://map.longdo.com/docs/ --}}
         <script type="text/javascript" src="https://api.longdo.com/map/?key=a1f0b3aff58245ed8be4929f110ba0b5"></script>
+        {{-- jquery for user ajax --}}
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 
         <script>
-            var map;
-            // function initMap() {
-            //     map = new longdo.Map({
-            //         placeholder: document.getElementById('map'),
-            //         language: 'th'
-            //     });
-            //     map.zoom(14, true);
-
-            //     var marker = new longdo.Marker({ lon: 100.53, lat: 13.80 }, true);
-            //     map.Overlays.add(marker);
-            // }
-
-            // initMap()
-
-
+            var map; //init map
+            var map_key = "a1f0b3aff58245ed8be4929f110ba0b5";
             var app = new Vue({
                 el: '#app',
                 vuetify: new Vuetify(),
                 data() {
                     return {
-
+                        keyword : "",
+                        locationList : [],
+                        lat : "13.8033836",
+                        lon : "100.533986"
                     }
                 },
                 methods: {
-                    initMap : async function() {
+                    initMap : function() {
                         map = new longdo.Map({
                             placeholder: document.getElementById('map'),
-                            language: 'th'
+                            language: 'th' // กำหนด map เป็นภาษาไทย
                         });
-                        map.zoom(14, true);
+                        map.zoom(14, true); //zoom map
 
-                        var marker = new longdo.Marker({ lon: 100.53, lat: 13.80 }, true);
+                        var marker = new longdo.Marker({ lon: 100.533986, lat: 13.8033836 }, true);
                         map.Overlays.add(marker);
+
+                        map.Search.placeholder(
+                            document.getElementById('result')
+                        );
+                    },
+                    searchShop : async function(){
+
+                        let res = await this.ajax_post("https://api.longdo.com/POIService/json/search?",{
+                                        key     : map_key,
+                                        lon     : this.lon,
+                                        lat     : this.lat,
+                                        keyword : this.keyword,
+                                        span    : '5km',
+                                        limit   : 10
+                                    });
+
+                        if(Object.keys(res.data).length > 0){
+                            let map_data = res.data
+                            app.locationList = []
+
+                            map_data.forEach((row,i) => {
+                                app.locationList.push({lon : row.lon,lat : row.lat})
+                                map.Overlays.add(new longdo.Marker({lon: app.locationList[i].lon, lat: app.locationList[i].lat}));
+                            });
+                            console.log( app.locationList);
+                            boundValue = longdo.Util.locationBound(app.locationList);
+                            map.bound(boundValue);
+                        }
+
+                    },ajax_post : async function (path, data) {
+                        let result;
+                        try {
+                            result = await $.ajax({
+                                type: "POST",
+                                url:  path,
+                                dataType: "json",
+                                data: data,
+                                beforeSend: function() {
+                                    $("#loading").show();
+                                },
+                                success: function(data) {
+                                    $("#loading").hide();
+                                },error:function(){
+                                    $("#loading").hide();
+                                }
+                            });
+                        } catch (error) {
+                            $("#loading").hide();
+                            result = error;
+                        }
+                        return result;
                     }
                 },
                 mounted: function () {
