@@ -40,7 +40,7 @@
                                     <button class="btn btn-primary" type="button" v-on:click="searchShop">Search</button>
                                 </div>
                             </div>
-                            <div class="text-ceenter">
+                            <div class="text-center">
                                 <div id="map"></div>
                             </div>
                         </v-card>
@@ -61,6 +61,7 @@
         <script>
             var map; //init map
             var map_key = "a1f0b3aff58245ed8be4929f110ba0b5";
+
             var app = new Vue({
                 el: '#app',
                 vuetify: new Vuetify(),
@@ -69,7 +70,8 @@
                         keyword : "",
                         locationList : [],
                         lat : "13.8033836",
-                        lon : "100.533986"
+                        lon : "100.533986",
+                        locationRes : [],
                     }
                 },
                 methods: {
@@ -80,12 +82,26 @@
                         });
                         map.zoom(14, true); //zoom map
 
-                        var marker = new longdo.Marker({ lon: 100.533986, lat: 13.8033836 }, true);
-                        map.Overlays.add(marker);
+                        this.startMap('100.533986',' 13.8033836')
 
                         map.Search.placeholder(
                             document.getElementById('result')
                         );
+                    },
+                    startMap : function(lon,lat) {
+                        var marker = new longdo.Marker(
+                            { lon: lon, lat: lat },
+                            {
+                                title: 'บางซื่อ',
+                                icon: {
+                                    url: 'https://map.longdo.com/mmmap/images/pin_mark.png',
+                                },
+                                detail: '-',
+                                weight: longdo.OverlayWeight.Top
+                            }
+                        );
+                        map.Overlays.add(marker);
+
                     },
                     searchShop : async function(){
 
@@ -94,22 +110,40 @@
                                         lon     : this.lon,
                                         lat     : this.lat,
                                         keyword : this.keyword,
-                                        span    : '5km',
-                                        limit   : 10
+                                        span    : '10km',
+                                        limit   : 20
                                     });
 
+                        this.locationRes = res.data
+
+                        map.Overlays.clear();
+
+                        this.startMap('100.533986',' 13.8033836')
+
                         if(Object.keys(res.data).length > 0){
+
                             let map_data = res.data
-                            app.locationList = []
+                            this.locationList = []
 
                             map_data.forEach((row,i) => {
-                                app.locationList.push({lon : row.lon,lat : row.lat})
-                                map.Overlays.add(new longdo.Marker({lon: app.locationList[i].lon, lat: app.locationList[i].lat}));
+                                this.locationList.push({lon : row.lon,lat : row.lat})
+                                map.Overlays.add(new longdo.Marker(
+                                    {
+                                        lon: row.lon,
+                                        lat: row.lat
+                                    },
+                                    {
+                                        title: row.name,
+                                        detail: row.address,
+                                        weight: longdo.OverlayWeight.Top
+                                    }
+                                ));
                             });
-                            console.log( app.locationList);
-                            boundValue = longdo.Util.locationBound(app.locationList);
+
+                            boundValue = longdo.Util.locationBound(this.locationList);
                             map.bound(boundValue);
                         }
+
 
                     },ajax_post : async function (path, data) {
                         let result;
@@ -120,16 +154,16 @@
                                 dataType: "json",
                                 data: data,
                                 beforeSend: function() {
-                                    $("#loading").show();
+
                                 },
                                 success: function(data) {
-                                    $("#loading").hide();
+
                                 },error:function(){
-                                    $("#loading").hide();
+
                                 }
                             });
                         } catch (error) {
-                            $("#loading").hide();
+
                             result = error;
                         }
                         return result;
