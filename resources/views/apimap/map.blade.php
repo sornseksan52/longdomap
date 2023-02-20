@@ -71,7 +71,7 @@
                                 </v-col>
                             </v-row>
 
-                            <div class="text-center">
+                            <div class="text-center mt-2">
                                 <div id="map"></div>
                             </div>
 
