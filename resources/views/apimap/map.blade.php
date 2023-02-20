@@ -34,15 +34,47 @@
                 <v-main>
                     <v-container>
                         <v-card elevation="2" class="p-2">
-                            <div class="input-group mt-3 mb-3">
-                                <input type="text" class="form-control" placeholder="ค้นหาร้านอาหาร" v-model="keyword">
-                                <div class="input-group-append">
-                                    <button class="btn btn-primary" type="button" v-on:click="searchShop">Search</button>
-                                </div>
-                            </div>
+                            <v-row>
+                                <v-col cols="12" sm="4" md="4">
+                                    <v-text-field
+                                    label="Keyword"
+                                    outlined
+                                    dense
+                                    v-model="keyword"
+                                    clearable
+                                    ></v-text-field>
+                                </v-col>
+
+                                <v-col cols="12" sm="3" md="3">
+                                    <v-text-field
+                                    label="Area"
+                                    outlined
+                                    dense
+                                    v-model="area"
+                                    suffix="Km"
+                                    ></v-text-field>
+                                </v-col>
+
+                                <v-col cols="12" sm="3" md="3">
+                                    <v-text-field
+                                    label="Show Limit"
+                                    outlined
+                                    v-model="show_limit"
+                                    dense
+                                    ></v-text-field>
+                                </v-col>
+
+                                <v-col cols="12" sm="2" md="2">
+                                    <v-btn block v-on:click="searchShop" color="primary">
+                                        Search
+                                    </v-btn>
+                                </v-col>
+                            </v-row>
+
                             <div class="text-center">
                                 <div id="map"></div>
                             </div>
+
                         </v-card>
                     </v-container>
                 </v-main>
@@ -52,8 +84,10 @@
         {{-- vuetify --}}
         <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
-        {{--  longdomap --}}
-        {{-- Documentation => https://map.longdo.com/docs/ --}}
+        {{--
+            longdomap
+            Documentation => https://map.longdo.com/docs/
+        --}}
         <script type="text/javascript" src="https://api.longdo.com/map/?key=a1f0b3aff58245ed8be4929f110ba0b5"></script>
         {{-- jquery for user ajax --}}
         <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
@@ -62,7 +96,7 @@
 
         <script>
             var map; //init map
-            var map_key = "a1f0b3aff58245ed8be4929f110ba0b5";
+            var map_key = "a1f0b3aff58245ed8be4929f110ba0b5"; //key api map
 
             var app = new Vue({
                 el: '#app',
@@ -74,21 +108,18 @@
                         lat : "13.8033836",
                         lon : "100.533986",
                         locationRes : [],
+                        area : 10, //area 10km
+                        show_limit : 10, //show limit 10
                     }
                 },
                 methods: {
                     initMap : function() {
                         map = new longdo.Map({
                             placeholder: document.getElementById('map'),
-                            language: 'th' // กำหนด map เป็นภาษาไทย
+                            language: 'th' // map use thai league
                         });
                         map.zoom(14, true); //zoom map
-
-                        this.startMap('100.533986',' 13.8033836')
-
-                        map.Search.placeholder(
-                            document.getElementById('result')
-                        );
+                        this.startMap('100.533986',' 13.8033836') // start point area bang sue
                     },
                     startMap : function(lon,lat) {
                         var marker = new longdo.Marker(
@@ -99,11 +130,10 @@
                                     url: 'https://map.longdo.com/mmmap/images/pin_mark.png',
                                 },
                                 detail: '-',
-                                weight: longdo.OverlayWeight.Top
+                                weight: longdo.OverlayWeight.Top //pop on top maker
                             }
                         );
                         map.Overlays.add(marker);
-
                     },
                     searchShop : async function(){
 
@@ -112,8 +142,8 @@
                                         lon     : this.lon,
                                         lat     : this.lat,
                                         keyword : this.keyword,
-                                        span    : '10km',
-                                        limit   : 20
+                                        span    : this.area+'km',
+                                        limit   : this.show_limit
                                     });
 
                         this.locationRes = res.data
@@ -173,7 +203,7 @@
                 },
                 mounted: function () {
 
-                    this.initMap()
+                    this.initMap() // init map onload page
 
                  },
             })
