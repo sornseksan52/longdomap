@@ -58,6 +58,8 @@
         {{-- jquery for user ajax --}}
         <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 
+        {{-- new pull test project --}}
+
         <script>
             var map; //init map
             var map_key = "a1f0b3aff58245ed8be4929f110ba0b5";
