@@ -41,7 +41,8 @@
                                     outlined
                                     dense
                                     v-model="keyword"
-                                    clearable
+                                    clearable {{-- clear input  --}}
+                                    v-on:keyup.enter="searchShop" {{-- enter search  --}}
                                     ></v-text-field>
                                 </v-col>
 
@@ -52,6 +53,8 @@
                                     dense
                                     v-model="area"
                                     suffix="Km"
+                                    oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');" {{-- input number only --}}
+                                    v-on:keyup.enter="searchShop"
                                     ></v-text-field>
                                 </v-col>
 
@@ -61,6 +64,8 @@
                                     outlined
                                     v-model="show_limit"
                                     dense
+                                    oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');"
+                                    v-on:keyup.enter="searchShop"
                                     ></v-text-field>
                                 </v-col>
 
@@ -72,6 +77,7 @@
                             </v-row>
 
                             <div class="text-center mt-2">
+                                {{-- show map --}}
                                 <div id="map"></div>
                             </div>
 
@@ -118,18 +124,25 @@
                             placeholder: document.getElementById('map'),
                             language: 'th' // map use thai league
                         });
-                        map.zoom(14, true); //zoom map
-                        this.startMap('100.533986',' 13.8033836') // start point area bang sue
+                        // map.zoom(14, true); //zoom map
+                        this.startMap(this.lon,this.lat) // start point area bang sue
                     },
-                    startMap : function(lon,lat) {
+                    startMap : async function(lon,lat) {
+
+                        let res = await this.ajax_post("https://api.longdo.com/POIService/json/search?",{
+                                        key     : map_key,
+                                        lon     : this.lon,
+                                        lat     : this.lat,
+                                    });
+
                         var marker = new longdo.Marker(
                             { lon: lon, lat: lat },
                             {
-                                title: 'บางซื่อ',
+                                title: res.data[0].name,
                                 icon: {
-                                    url: 'https://map.longdo.com/mmmap/images/pin_mark.png',
+                                    url: 'https://map.longdo.com/mmmap/images/pin_mark.png', // icon start point
                                 },
-                                detail: '-',
+                                detail: res.data[0].address,
                                 weight: longdo.OverlayWeight.Top //pop on top maker
                             }
                         );
@@ -148,9 +161,9 @@
 
                         this.locationRes = res.data
 
-                        map.Overlays.clear();
+                        map.Overlays.clear(); // clear marker
 
-                        this.startMap('100.533986',' 13.8033836')
+                        this.startMap(this.lon,this.lat)
 
                         if(Object.keys(res.data).length > 0){
 
