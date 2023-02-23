@@ -129,11 +129,24 @@
                     },
                     startMap : async function(lon,lat) {
 
-                        let res = await this.ajax_post("https://api.longdo.com/POIService/json/search?",{
-                                        key     : map_key,
-                                        lon     : this.lon,
-                                        lat     : this.lat,
-                                    });
+                        let getMarker = sessionStorage.getItem('makerInit'), //get session storage ชื่อ makerInit ของหมุนเริ่มต้น
+                            res = []
+
+                        if(!getMarker || getMarker === undefined){ //ถ้ายังไม่มีข้อมูล session storage ก็ดึงข้อมูลจาก api
+
+                            res = await this.ajax_post("https://api.longdo.com/POIService/json/search?",{
+                                key     : map_key,
+                                lon     : this.lon,
+                                lat     : this.lat,
+                            });
+
+                            sessionStorage.setItem('makerInit',JSON.stringify(res)); //เก็บขอมูล session storage ชื่อ makerInit ซึงเก็บเป็น string
+
+                        }else{
+
+                            getMarker = JSON.parse(getMarker); // แปลงข้อมูลจาก string เป็น onject
+                            res = getMarker
+                        }
 
                         var marker = new longdo.Marker(
                             { lon: lon, lat: lat },
@@ -172,7 +185,7 @@
 
                             map_data.forEach((row,i) => {
                                 this.locationList.push({lon : row.lon,lat : row.lat})
-                                map.Overlays.add(new longdo.Marker(
+                                map.Overlays.add(new longdo.Marker( //rander maker
                                     {
                                         lon: row.lon,
                                         lat: row.lat
